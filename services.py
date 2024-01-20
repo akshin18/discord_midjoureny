@@ -103,3 +103,22 @@ def save():
                 f.write(r.content)
             images_data.append([image_path, img_promt])
         set_metadata(images_data)
+
+def auto_choose():
+    for message_id,costumn_ids in Storage.random_choice.copy():
+        r = random.randint(0,100)
+        count = 1
+        if r < 70:
+            count = 3
+        elif r < 82:
+            count = 4
+        elif r < 91:
+            count = 2
+
+        costumn_ids_result = random.choices(costumn_ids, k=count)
+        for i in costumn_ids_result:
+            Storage.choose.append([message_id,i])
+    
+def next_choose():
+    choose = Storage.choose.pop(0)
+    interaction(GUILD_ID, CHANNEL_ID, choose[0], MIDJOURNERY_ID, choose[1])

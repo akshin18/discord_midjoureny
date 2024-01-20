@@ -7,7 +7,20 @@ def set_metadata(data:list):
         with ExifToolHelper() as et:
             et.set_tags(
                 [image_path],
-                tags={"Title": prompt},
+                tags={"XMP:Title": prompt},
                 params=["-P", "-overwrite_original"]
             )
 
+
+def get_metadata():
+    for image_path in os.listdir("images"):
+        with ExifToolHelper() as et:
+            for d in et.get_metadata(f"images/{image_path}"):
+                for k, v in d.items():
+                    print(f"Dict: {k} = {v}")
+        print("\n")
+
+
+# a = [[f"images/{x}","SOme test "] for x in os.listdir("images")]
+# # set_metadata(a)
+# get_metadata()

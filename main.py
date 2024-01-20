@@ -1,10 +1,8 @@
-
-
-from config import TOKEN, MIDJOURNERY_ID, ADMIN_ID, CHANNEL_ID, GUILD_ID
-
+import sys
 from discord import Client, Intents, Message
 
-from services import  next_prompt, next_upscale, start, choose, save
+from config import TOKEN, MIDJOURNERY_ID, ADMIN_ID, CHANNEL_ID, GUILD_ID
+from services import  auto_choose, next_choose, next_prompt, next_upscale, start, choose, save
 from storage import Storage
 
 
@@ -13,6 +11,10 @@ intents.message_content = True
 
 client = Client(intents=intents)
 
+@client.event
+async def on_ready():
+    if Storage.auto == True:
+        await client.get_channel(CHANNEL_ID).send("start")
 
 @client.event
 async def on_message(message:Message):
@@ -29,32 +31,43 @@ async def on_message(message:Message):
                 await message.channel.send("Stopped")
                 
     if Storage.state == 0:
-        if message.author.id == ADMIN_ID:
+        # if message.author.id == ADMIN_ID:
             if message.content == "start":
                 await message.channel.send("starting")
                 start()
             elif message.content == "choose":
                 await message.channel.send("Choose images")
                 choose()
+                if Storage.auto == True:
+                    auto_choose()
+                    next_choose()
             elif message.content == "save":
                 await message.channel.send("Start Save")
                 save()
                 await message.channel.send("Save Done")
     elif Storage.state == 1:
-        if message.author.id == MIDJOURNERY_ID:
+        # if message.author.id == MIDJOURNERY_ID:
             if message.content.strip().endswith("(fast)"):
+                Storage.random_choice.append([message.id, [x.custom_id for x in message.components[0].children[:4]]])
                 if Storage.prompts != []:
-                    Storage.random_choice = [message.id, [x.custom_id for x in message.components[0].children]]
                     next_prompt()
                 else:
                     Storage.state = 0
                     print("Prompts Done")
                     await message.channel.send("Prompts Done")
+                    if Storage.auto == True:
+                        await message.channel.send("choose")
+                         
     elif Storage.state == 2:
-        if message.author.id == MIDJOURNERY_ID:
+        # if message.author.id == MIDJOURNERY_ID:
             if message.content.strip().endswith(f" <@{ADMIN_ID}>"):
                 Storage.to_upscale.append([message.id, message.components[0].children[1].custom_id])
-        elif message.author.id == ADMIN_ID:
+                if Storage.auto == True:
+                    if Storage.choose == []:
+                          await message.channel.send("upscale")
+                    else:
+                         next_choose()
+        # elif message.author.id == ADMIN_ID:
             if message.content.strip() == "upscale":
                 await message.channel.send("Starting upscale")
                 Storage.state = 3
@@ -63,18 +76,27 @@ async def on_message(message:Message):
                 else:
                     Storage.state = 0
                     print("No upscale found")
+                    await message.channel.send("No upscale found")   
     elif Storage.state == 3:
-        if message.author.id == MIDJOURNERY_ID:
+        # if message.author.id == MIDJOURNERY_ID:
             if message.content.strip().endswith("(fast)"):
-                Storage.to_save_image.append([message.attachments[0].url,message.content.split("--")[0].strip()[2:]])
+                if "," in message.content:
+                    Storage.to_save_image.append([message.attachments[0].url,message.content.split(",")[0].strip()[2:]])
+                else:
+                    Storage.to_save_image.append([message.attachments[0].url,message.content.split("--")[0].strip()[2:]])
                 if Storage.to_upscale != []:
                     next_upscale()
                 else:
                     Storage.state = 0
                     print("Upscale done")
                     await message.channel.send("Upscale Done")   
+                    await message.channel.send("Start Save")
+                    save()
+                    await message.channel.send("Save Done")
 
 
 if __name__ == "__main__":
+    if len(sys.argv) > 1:
+        Storage.auto = True
     client.run(TOKEN)
 
