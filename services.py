@@ -2,7 +2,7 @@ import os
 import json
 import random
 import requests
-from config import CHANNEL_ID, HEADERS, GUILD_ID, MIDJOURNERY_ID, SESSION_ID
+from config import  HEADERS, MIDJOURNERY_ID, SESSION_ID
 from img import set_metadata
 from storage import Storage
 
@@ -36,19 +36,27 @@ def send_message(content:str):
         "tts":False,
         "flags":0
     }
-    requests.post(f"https://discord.com/api/v9/channels/{CHANNEL_ID}/messages", headers=HEADERS, json=data)
+    requests.post(f"https://discord.com/api/v9/channels/{Storage.CHANNEL_ID}/messages", headers=HEADERS, json=data)
     
 
 def send_prompt(prompt):
 
     url = "https://discord.com/api/v9/interactions"
- 
-    pre_data = {"type":2,"application_id":f"{MIDJOURNERY_ID}","guild_id":f"{GUILD_ID}","channel_id":f"{CHANNEL_ID}","session_id":f"{SESSION_ID}","data":{"version":"1166847114203123795","id":"938956540159881230","name":"imagine","type":1,"options":[{"type":3,"name":"prompt","value":f"{prompt}"}],"application_command":{"id":"938956540159881230","type":1,"application_id":"936929561302675456","version":"1166847114203123795","name":"imagine","description":"Create images with Midjourney","options":[{"type":3,"name":"prompt","description":"The prompt to imagine","required":True,"description_localized":"The prompt to imagine","name_localized":"prompt"}],"integration_types":[0],"global_popularity_rank":1,"description_localized":"Create images with Midjourney","name_localized":"imagine"},"attachments":[]},"nonce":f"{nonce()}","analytics_location":"slash_ui"}
+    print(f"{MIDJOURNERY_ID=}")
+    print(f"{Storage.GUILD_ID=}")
+    print(f"{Storage.CHANNEL_ID=}")
+    print(f"{Storage.ADMIN_ID=}")
+    print(f"{SESSION_ID=}")
+    pre_data = {"type":2,"application_id":f"{MIDJOURNERY_ID}","guild_id":f"{Storage.GUILD_ID}","channel_id":f"{Storage.CHANNEL_ID}","session_id":f"{SESSION_ID}","data":{"version":"1166847114203123795","id":"938956540159881230","name":"imagine","type":1,"options":[{"type":3,"name":"prompt","value":f"{prompt}"}],"application_command":{"id":"938956540159881230","type":1,"application_id":"936929561302675456","version":"1166847114203123795","name":"imagine","description":"Create images with Midjourney","options":[{"type":3,"name":"prompt","description":"The prompt to imagine","required":True,"description_localized":"The prompt to imagine","name_localized":"prompt"}],"integration_types":[0],"global_popularity_rank":1,"description_localized":"Create images with Midjourney","name_localized":"imagine"},"attachments":[]},"nonce":f"{nonce()}","analytics_location":"slash_ui"}
     payload = {
         'payload_json': json.dumps(pre_data)
         }
-    
-    requests.post(url, headers=HEADERS, data=payload)
+    headers = HEADERS.copy()
+    print(payload)
+    print(headers)
+    r = requests.post(url, headers=HEADERS, data=payload)
+    print(r.status_code)
+    print(r.text)
 
 
 
@@ -68,7 +76,7 @@ def next_prompt():
 
 def next_upscale():
     upscale = Storage.to_upscale.pop(0)
-    interaction(GUILD_ID, CHANNEL_ID, upscale[0], MIDJOURNERY_ID, upscale[1])
+    interaction(Storage.GUILD_ID, Storage.CHANNEL_ID, upscale[0], MIDJOURNERY_ID, upscale[1])
 
 
 def start():
@@ -121,4 +129,4 @@ def auto_choose():
     
 def next_choose():
     choose = Storage.choose.pop(0)
-    interaction(GUILD_ID, CHANNEL_ID, choose[0], MIDJOURNERY_ID, choose[1])
+    interaction(Storage.GUILD_ID, Storage.CHANNEL_ID, choose[0], MIDJOURNERY_ID, choose[1])

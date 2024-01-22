@@ -1,7 +1,8 @@
 import sys
+from time import sleep
 from discord import Client, Intents, Message
 
-from config import TOKEN, MIDJOURNERY_ID, ADMIN_ID, CHANNEL_ID, GUILD_ID
+from config import TOKEN, MIDJOURNERY_ID
 from services import  auto_choose, next_choose, next_prompt, next_upscale, start, choose, save
 from storage import Storage
 
@@ -11,16 +12,17 @@ intents.message_content = True
 
 client = Client(intents=intents)
 
-@client.event
-async def on_ready():
-    if Storage.auto == True:
-        await client.get_channel(CHANNEL_ID).send("start")
+
 
 @client.event
 async def on_message(message:Message):
     print(f"{message.id=}\n{message.type=}\n{message.author=}\n{message.channel=}\n{message.guild=}\n{message.interaction=}\n{message.activity=}\n{message.attachments=}\n{message.content=}\n{message.components=}")
     print("\n")
-
+    if message.content == "connect" and Storage.ADMIN_ID == None:
+         Storage.ADMIN_ID = message.author.id
+         Storage.CHANNEL_ID = message.channel.id
+         Storage.GUILD_ID = message.guild.id
+         await message.channel.send("Connected")
     if Storage.work == False and Storage.state != 0:
         print("Does not work")
         return
@@ -31,7 +33,7 @@ async def on_message(message:Message):
                 await message.channel.send("Stopped")
                 
     if Storage.state == 0:
-        # if message.author.id == ADMIN_ID:
+        # if message.author.id == Storage.ADMIN_ID:
             if message.content == "start":
                 await message.channel.send("starting")
                 start()
@@ -41,6 +43,7 @@ async def on_message(message:Message):
                 if Storage.auto == True:
                     auto_choose()
                     next_choose()
+                    sleep(5)
             elif message.content == "save":
                 await message.channel.send("Start Save")
                 save()
@@ -60,19 +63,22 @@ async def on_message(message:Message):
                          
     elif Storage.state == 2:
         # if message.author.id == MIDJOURNERY_ID:
-            if message.content.strip().endswith(f" <@{ADMIN_ID}>"):
+            if message.content.strip().endswith(f" <@{Storage.ADMIN_ID}>"):
                 Storage.to_upscale.append([message.id, message.components[0].children[1].custom_id])
                 if Storage.auto == True:
                     if Storage.choose == []:
                           await message.channel.send("upscale")
                     else:
                          next_choose()
-        # elif message.author.id == ADMIN_ID:
+                         sleep(10)
+        # elif message.author.id == Storage.ADMIN_ID:
             if message.content.strip() == "upscale":
                 await message.channel.send("Starting upscale")
                 Storage.state = 3
                 if Storage.to_upscale != []:
                     next_upscale()
+                    sleep(10)
+
                 else:
                     Storage.state = 0
                     print("No upscale found")
