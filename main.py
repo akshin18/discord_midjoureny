@@ -50,7 +50,7 @@ async def on_message(message:Message):
                 await message.channel.send("Save Done")
     elif Storage.state == 1:
         # if message.author.id == MIDJOURNERY_ID:
-            if message.content.strip().endswith("(fast)"):
+            if message.content.strip().endswith("(fast)") or message.content.strip().endswith("(relaxed)"):
                 Storage.random_choice.append([message.id, [x.custom_id for x in message.components[0].children[:4]]])
                 if Storage.prompts != []:
                     next_prompt()
@@ -71,7 +71,7 @@ async def on_message(message:Message):
                     else:
                          next_choose()
                          sleep(10)
-        # elif message.author.id == Storage.ADMIN_ID:
+        # elif message.author.qid == Storage.ADMIN_ID:
             if message.content.strip() == "upscale":
                 await message.channel.send("Starting upscale")
                 Storage.state = 3
@@ -85,7 +85,7 @@ async def on_message(message:Message):
                     await message.channel.send("No upscale found")   
     elif Storage.state == 3:
         # if message.author.id == MIDJOURNERY_ID:
-            if message.content.strip().endswith("(fast)"):
+            if message.content.strip().endswith("(fast)") or message.content.strip().endswith("(relaxed)"):
                 if "," in message.content:
                     Storage.to_save_image.append([message.attachments[0].url,message.content.split(",")[0].strip()[2:]])
                 else:
